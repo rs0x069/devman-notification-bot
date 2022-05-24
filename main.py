@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -8,6 +9,9 @@ from dotenv import load_dotenv
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+    logging.info('Bot is started')
+
     load_dotenv()
 
     devman_token = os.getenv("DEVMAN_TOKEN")
@@ -29,7 +33,7 @@ def main():
         except requests.exceptions.ReadTimeout:
             continue
         except requests.exceptions.ConnectionError as err:
-            print("ConnectionError:", err)
+            logging.error("ConnectionError:", err)
             time.sleep(1)
         else:
             lesson_checking = response.json()
