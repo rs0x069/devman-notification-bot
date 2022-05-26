@@ -2,6 +2,7 @@ import logging
 import os
 import requests
 import time
+import traceback
 
 from dotenv import load_dotenv
 
@@ -21,7 +22,7 @@ def main():
     }
     requests_params = {}
 
-    logger = logging.getLogger("Logger")
+    logger = logging.getLogger("Main logger")
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramLogsHandler(telegram_api, int(telegram_chat_id)))
     logger.info('Bot is started')
@@ -32,12 +33,10 @@ def main():
             response.raise_for_status()
         except requests.exceptions.ReadTimeout:
             continue
-        except requests.exceptions.ConnectionError as err:
+        except requests.exceptions.RequestException as err:
             logger.error(err)
-            time.sleep(1)
-        except requests.exceptions.HTTPError as err:
-            logger.error(err)
-            time.sleep(1)
+            logger.error(traceback.format_exc(limit=5))
+            time.sleep(5)
         else:
             lesson_checking = response.json()
             lesson_status = lesson_checking['status']
