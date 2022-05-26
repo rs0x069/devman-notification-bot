@@ -1,17 +1,14 @@
 import logging
 import os
-import time
-
 import requests
-import telegram
+import time
 
 from dotenv import load_dotenv
 
+from telegram_logger import TelegramLogsHandler
+
 
 def main():
-    logging.basicConfig(level=logging.INFO)
-    logging.info('Bot is started')
-
     load_dotenv()
 
     devman_token = os.getenv("DEVMAN_TOKEN")
@@ -24,7 +21,10 @@ def main():
     }
     requests_params = {}
 
-    bot = telegram.Bot(token=telegram_api)
+    logger = logging.getLogger("Logger")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(TelegramLogsHandler(telegram_api, int(telegram_chat_id)))
+    logger.info('Bot is started')
 
     while True:
         try:
@@ -33,7 +33,10 @@ def main():
         except requests.exceptions.ReadTimeout:
             continue
         except requests.exceptions.ConnectionError as err:
-            logging.error("ConnectionError:", err)
+            logger.error(err)
+            time.sleep(1)
+        except requests.exceptions.HTTPError as err:
+            logger.error(err)
             time.sleep(1)
         else:
             lesson_checking = response.json()
@@ -62,7 +65,7 @@ def main():
                         f'{lesson_url}'
                     )
 
-                bot.send_message(text=message_body, chat_id=telegram_chat_id)
+                logger.info(message_body)
 
                 timestamp = lesson_checking['last_attempt_timestamp']
                 requests_params = {'timestamp': timestamp}
