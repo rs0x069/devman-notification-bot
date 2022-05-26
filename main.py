@@ -68,8 +68,6 @@ def main():
 
                 timestamp = lesson_checking['last_attempt_timestamp']
                 requests_params = {'timestamp': timestamp}
-            else:
-                print('Status:', lesson_status)
 
 
 if __name__ == '__main__':
