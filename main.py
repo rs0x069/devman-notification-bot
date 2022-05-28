@@ -1,12 +1,28 @@
 import logging
 import os
 import requests
+import telegram
 import time
-import traceback
 
 from dotenv import load_dotenv
 
-from telegram_logger import TelegramLogsHandler
+logger = logging.getLogger("Main logger")
+
+
+class TelegramLogsHandler(logging.Handler):
+    def __init__(self, token: str, chat_id: int):
+        super().__init__()
+        self.token = token
+        self.chat_id = chat_id
+
+        self.bot = telegram.Bot(token=self.token)
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        try:
+            self.bot.send_message(self.chat_id, log_entry)
+        except telegram.error.TelegramError as err:
+            print('TelegramError:', err)
 
 
 def main():
@@ -22,7 +38,6 @@ def main():
     }
     requests_params = {}
 
-    logger = logging.getLogger("Main logger")
     logger.setLevel(logging.INFO)
     logger.addHandler(TelegramLogsHandler(telegram_api, int(telegram_chat_id)))
     logger.info('Bot is started')
@@ -34,9 +49,8 @@ def main():
         except requests.exceptions.ReadTimeout:
             continue
         except requests.exceptions.RequestException as err:
-            logger.error(err)
-            logger.error(traceback.format_exc(limit=5))
-            time.sleep(5)
+            logger.exception(err)
+            time.sleep(60)
         else:
             lesson_checking = response.json()
             lesson_status = lesson_checking['status']
